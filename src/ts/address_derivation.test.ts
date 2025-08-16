@@ -67,16 +67,16 @@ describe("AddressDerivation Contract", () => {
   });
 
   it("Circuit derives address from secret keys correctly", async () => {
-    const { address, saltedInitializationHash, contractorClassId } = await deriveContractAddress(
+    const { address, saltedInitializationHash, contractClassId } = await deriveContractAddress(
       AddressDerivationContractArtifact,
-      [alice.getAddress()],
+      [],
       alice.getAddress(),
       salt,
       keys.publicKeys,
     );
 
     const secretKeyDerivated = await addressDerivation.methods.compute_address_from_secret_keys(
-      contractorClassId.toField(),
+      contractClassId.toField(),
       saltedInitializationHash,
       new Fr(keys.masterNullifierSecretKey.toBigInt()),
       new Fr(keys.masterIncomingViewingSecretKey.toBigInt()),
@@ -89,16 +89,16 @@ describe("AddressDerivation Contract", () => {
   });
 
   it("Circuit derives address from secret keys and init hash correctly", async () => {
-    const { address, initializationHash, contractorClassId } = await deriveContractAddress(
+    const { address, initializationHash, contractClassId } = await deriveContractAddress(
       AddressDerivationContractArtifact,
-      [alice.getAddress()],
+      [],
       alice.getAddress(),
       salt,
       keys.publicKeys,
     );
 
     const skAndInitHashDerivated = await addressDerivation.methods.compute_address_from_secret_keys_and_init_hash(
-      contractorClassId.toField(),
+      contractClassId.toField(),
       salt,
       initializationHash,
       alice.getAddress(),
@@ -113,16 +113,16 @@ describe("AddressDerivation Contract", () => {
   });
 
   it("Both derivation methods should produce the same address", async () => {
-    const { address, initializationHash, saltedInitializationHash, contractorClassId } = await deriveContractAddress(
+    const { address, initializationHash, saltedInitializationHash, contractClassId } = await deriveContractAddress(
       AddressDerivationContractArtifact,
-      [alice.getAddress()],
+      [],
       alice.getAddress(),
       salt,
       keys.publicKeys,
     );
 
     const secretKeyDerivated = await addressDerivation.methods.compute_address_from_secret_keys(
-      contractorClassId.toField(),
+      contractClassId.toField(),
       saltedInitializationHash,
       new Fr(keys.masterNullifierSecretKey.toBigInt()),
       new Fr(keys.masterIncomingViewingSecretKey.toBigInt()),
@@ -131,7 +131,7 @@ describe("AddressDerivation Contract", () => {
     ).simulate();
 
     const skAndInitHashDerivated = await addressDerivation.methods.compute_address_from_secret_keys_and_init_hash(
-      contractorClassId.toField(),
+      contractClassId.toField(),
       salt,
       initializationHash,
       alice.getAddress(),

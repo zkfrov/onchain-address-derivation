@@ -99,7 +99,7 @@ export async function deriveContractAddress(
   }
 
   const contractClass = await getContractClassFromArtifact(artifact);
-  const contractorClassId = contractClass.id;
+  const contractClassId = contractClass.id;
   const constructorArtifact = getDefaultInitializer(artifact);
   const initializationHash = await computeInitializationHash(constructorArtifact, constructorArgs);
   const saltedInitializationHash = await computeSaltedInitializationHash({
@@ -109,10 +109,10 @@ export async function deriveContractAddress(
   });
 
   const address = await computeContractAddressFromInstance({
-    originalContractClassId: contractorClassId,
+    originalContractClassId: contractClassId,
     saltedInitializationHash: saltedInitializationHash,
     publicKeys: publicKeys
   });
 
-  return { address, initializationHash, saltedInitializationHash, contractorClassId };
+  return { address, initializationHash, saltedInitializationHash, contractClassId };
 }
