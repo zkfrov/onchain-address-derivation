@@ -6,9 +6,9 @@ import {
   AztecAddress,
 } from "@aztec/aztec.js";
 import {
-  CounterContract,
-  CounterContractArtifact,
-} from "../artifacts/Counter.js";
+  AddressDerivationContract,
+  AddressDerivationContractArtifact,
+} from "../artifacts/AddressDerivation.js";
 import {
   Fr,
   getContractClassFromArtifact,
@@ -34,50 +34,48 @@ export const setupSandbox = async () => {
 };
 
 /**
- * Deploys the Counter contract.
+ * Deploys the AddressDerivation contract.
  * @param deployer - The wallet to deploy the contract with.
  * @param owner - The address of the owner of the contract.
  * @returns A deployed contract instance.
  */
-export async function deployCounter(
+export async function deployAddressDerivation(
   deployer: AccountWallet,
   owner: AztecAddress,
-): Promise<CounterContract> {
+): Promise<AddressDerivationContract> {
   const contract = await Contract.deploy(
     deployer,
-    CounterContractArtifact,
-    [owner],
-    "constructor", // not actually needed since it's the default constructor
+    AddressDerivationContractArtifact,
+    [],
   )
     .send()
     .deployed();
-  return contract as CounterContract;
+  return contract as AddressDerivationContract;
 }
 
 /**
- * Deploys the Counter contract.
+ * Deploys the AddressDerivation contract.
  * @param publicKeys - The public keys to use for the contract.
  * @param deployer - The wallet to deploy the contract with.
  * @param owner - The address of the owner of the contract.
  * @param salt - The salt to use for the contract address. If not provided, a random salt will be used.
  * @returns A deployed contract instance.
  */
-export async function deployCounterWithPublicKeysAndSalt(
+export async function deployAddressDerivationWithPublicKeysAndSalt(
   publicKeys: PublicKeys,
   deployer: AccountWallet,
   owner: AztecAddress,
   salt: Fr = Fr.random(),
-): Promise<CounterContract> {
+): Promise<AddressDerivationContract> {
   const contract = await Contract.deployWithPublicKeys(
     publicKeys,
     deployer,
-    CounterContractArtifact,
-    [owner],
-    "constructor",
+    AddressDerivationContractArtifact,
+    [],
   )
     .send({ contractAddressSalt: salt })
     .deployed();
-  return contract as CounterContract;
+  return contract as AddressDerivationContract;
 }
 
 /**

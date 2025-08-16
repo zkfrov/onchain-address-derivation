@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "src/nr/counter_contract",
+    "src/nr/address_derivation_contract",
 ]
 
 [benchmark]
-counter = "benchmarks/counter.benchmark.ts"
+address_derivation_contract = "benchmarks/address_derivation_contract.benchmark.ts"

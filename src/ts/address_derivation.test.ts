@@ -1,7 +1,7 @@
 import {
-  CounterContract,
-  CounterContractArtifact,
-} from "../artifacts/Counter.js";
+  AddressDerivationContract,
+  AddressDerivationContractArtifact,
+} from "../artifacts/AddressDerivation.js";
 import {
   AccountWallet,
   CompleteAddress,
@@ -12,7 +12,7 @@ import {
   GrumpkinScalar,
 } from "@aztec/aztec.js";
 import {
-  deployCounterWithPublicKeysAndSalt,
+  deployAddressDerivationWithPublicKeysAndSalt,
   setupSandbox,
   deriveContractAddress
 } from "./utils.js";
@@ -20,7 +20,7 @@ import { getInitialTestAccountsWallets } from "@aztec/accounts/testing";
 import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { deriveKeys } from '@aztec/stdlib/keys';
 
-describe("Counter Contract", () => {
+describe("AddressDerivation Contract", () => {
   let pxe: PXE;
   let wallets: AccountWalletWithSecretKey[] = [];
   let accounts: CompleteAddress[] = [];
@@ -29,7 +29,7 @@ describe("Counter Contract", () => {
   let bob: AccountWallet;
   let carl: AccountWallet;
 
-  let counter: CounterContract;
+  let addressDerivation: AddressDerivationContract;
   let keys: {
     masterNullifierSecretKey: GrumpkinScalar;
     masterIncomingViewingSecretKey: GrumpkinScalar;
@@ -57,8 +57,8 @@ describe("Counter Contract", () => {
     // Using a random salt for each test run to avoid Existing nullifier error
     salt = Fr.random();
 
-    // Deploy the Counter contract with the public keys
-    counter = await deployCounterWithPublicKeysAndSalt(
+    // Deploy the AddressDerivation contract with the public keys
+    addressDerivation = await deployAddressDerivationWithPublicKeysAndSalt(
       keys.publicKeys,
       alice,
       alice.getAddress(),
@@ -68,14 +68,14 @@ describe("Counter Contract", () => {
 
   it("Circuit derives address from secret keys correctly", async () => {
     const { address, saltedInitializationHash, contractorClassId } = await deriveContractAddress(
-      CounterContractArtifact,
+      AddressDerivationContractArtifact,
       [alice.getAddress()],
       alice.getAddress(),
       salt,
       keys.publicKeys,
     );
 
-    const secretKeyDerivated = await counter.methods.compute_address_from_secret_keys(
+    const secretKeyDerivated = await addressDerivation.methods.compute_address_from_secret_keys(
       contractorClassId.toField(),
       saltedInitializationHash,
       new Fr(keys.masterNullifierSecretKey.toBigInt()),
@@ -83,21 +83,21 @@ describe("Counter Contract", () => {
       new Fr(keys.masterOutgoingViewingSecretKey.toBigInt()),
       new Fr(keys.masterTaggingSecretKey.toBigInt()),
     ).simulate();
-    
-    expect(secretKeyDerivated.toString()).toBe(counter.address.toString());
+
+    expect(secretKeyDerivated.toString()).toBe(addressDerivation.address.toString());
     expect(secretKeyDerivated.toString()).toBe(address.toString());
   });
 
   it("Circuit derives address from secret keys and init hash correctly", async () => {
     const { address, initializationHash, contractorClassId } = await deriveContractAddress(
-      CounterContractArtifact,
+      AddressDerivationContractArtifact,
       [alice.getAddress()],
       alice.getAddress(),
       salt,
       keys.publicKeys,
     );
 
-    const skAndInitHashDerivated = await counter.methods.compute_address_from_secret_keys_and_init_hash(
+    const skAndInitHashDerivated = await addressDerivation.methods.compute_address_from_secret_keys_and_init_hash(
       contractorClassId.toField(),
       salt,
       initializationHash,
@@ -107,21 +107,21 @@ describe("Counter Contract", () => {
       new Fr(keys.masterOutgoingViewingSecretKey.toBigInt()),
       new Fr(keys.masterTaggingSecretKey.toBigInt()),
     ).simulate();
-    
-    expect(skAndInitHashDerivated.toString()).toBe(counter.address.toString());
+
+    expect(skAndInitHashDerivated.toString()).toBe(addressDerivation.address.toString());
     expect(skAndInitHashDerivated.toString()).toBe(address.toString());
   });
 
   it("Both derivation methods should produce the same address", async () => {
     const { address, initializationHash, saltedInitializationHash, contractorClassId } = await deriveContractAddress(
-      CounterContractArtifact,
+      AddressDerivationContractArtifact,
       [alice.getAddress()],
       alice.getAddress(),
       salt,
       keys.publicKeys,
     );
 
-    const secretKeyDerivated = await counter.methods.compute_address_from_secret_keys(
+    const secretKeyDerivated = await addressDerivation.methods.compute_address_from_secret_keys(
       contractorClassId.toField(),
       saltedInitializationHash,
       new Fr(keys.masterNullifierSecretKey.toBigInt()),
@@ -130,7 +130,7 @@ describe("Counter Contract", () => {
       new Fr(keys.masterTaggingSecretKey.toBigInt()),
     ).simulate();
 
-    const skAndInitHashDerivated = await counter.methods.compute_address_from_secret_keys_and_init_hash(
+    const skAndInitHashDerivated = await addressDerivation.methods.compute_address_from_secret_keys_and_init_hash(
       contractorClassId.toField(),
       salt,
       initializationHash,
@@ -140,14 +140,14 @@ describe("Counter Contract", () => {
       new Fr(keys.masterOutgoingViewingSecretKey.toBigInt()),
       new Fr(keys.masterTaggingSecretKey.toBigInt()),
     ).simulate();
-    
-    expect(secretKeyDerivated.toString()).toBe(counter.address.toString());
+
+    expect(secretKeyDerivated.toString()).toBe(addressDerivation.address.toString());
     expect(secretKeyDerivated.toString()).toBe(address.toString());
     expect(secretKeyDerivated.toString()).toBe(skAndInitHashDerivated.toString());
   });
  
   it("Secret to public key conversion should match", async () => {
-    const publicKeys = await counter.methods.secrets_to_public_keys(
+    const publicKeys = await addressDerivation.methods.secrets_to_public_keys(
       new Fr(keys.masterNullifierSecretKey.toBigInt()),
       new Fr(keys.masterIncomingViewingSecretKey.toBigInt()),
       new Fr(keys.masterOutgoingViewingSecretKey.toBigInt()),
