@@ -89,7 +89,7 @@ export async function deployCounterWithPublicKeysAndSalt(
  * @param publicKeys - The public keys to use for the contract.
  * @returns The predicted contract address.
  */
-export async function predictContractAddress(
+export async function deriveContractAddress(
   artifact: any,
   constructorArgs: any,
   deployer: AztecAddress = AztecAddress.ZERO,
@@ -101,6 +101,7 @@ export async function predictContractAddress(
   }
 
   const contractClass = await getContractClassFromArtifact(artifact);
+  const contractorClassId = contractClass.id;
   const constructorArtifact = getDefaultInitializer(artifact);
   const initializationHash = await computeInitializationHash(constructorArtifact, constructorArgs);
   const saltedInitializationHash = await computeSaltedInitializationHash({
@@ -110,10 +111,10 @@ export async function predictContractAddress(
   });
 
   const address = await computeContractAddressFromInstance({
-    originalContractClassId: contractClass.id,
+    originalContractClassId: contractorClassId,
     saltedInitializationHash: saltedInitializationHash,
     publicKeys: publicKeys
   });
 
-  return { address, initializationHash };
+  return { address, initializationHash, saltedInitializationHash, contractorClassId };
 }

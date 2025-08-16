@@ -8,16 +8,17 @@ import {
   PXE,
   AccountWalletWithSecretKey,
   Fr,
+  PublicKeys,
+  GrumpkinScalar,
 } from "@aztec/aztec.js";
 import {
   deployCounterWithPublicKeysAndSalt,
   setupSandbox,
-  predictContractAddress
+  deriveContractAddress
 } from "./utils.js";
 import { getInitialTestAccountsWallets } from "@aztec/accounts/testing";
 import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { deriveKeys } from '@aztec/stdlib/keys';
-import { count } from "console";
 
 describe("Counter Contract", () => {
   let pxe: PXE;
@@ -29,7 +30,13 @@ describe("Counter Contract", () => {
   let carl: AccountWallet;
 
   let counter: CounterContract;
-  let keys: any;
+  let keys: {
+    masterNullifierSecretKey: GrumpkinScalar;
+    masterIncomingViewingSecretKey: GrumpkinScalar;
+    masterOutgoingViewingSecretKey: GrumpkinScalar;
+    masterTaggingSecretKey: GrumpkinScalar;
+    publicKeys: PublicKeys;
+  };
   let salt: Fr;
 
   beforeAll(async () => {
@@ -42,10 +49,8 @@ describe("Counter Contract", () => {
     bob = wallets[1];
     carl = wallets[2];
 
-    // Keys and salt are used to deploy and derive the contract address
-    // Derive keys for the contract with deterministic value
-    keys = await deriveKeys(new Fr(1));
-    console.log(keys);
+    // Derive keys for the contract with a deterministic value
+    keys = await deriveKeys(Fr.ONE);
   });
 
   beforeEach(async () => {
@@ -61,8 +66,8 @@ describe("Counter Contract", () => {
     );
   });
 
-  it("Deploy and predicted address match", async () => {
-    const { address } = await predictContractAddress(
+  it("Circuit derives address from secret keys correctly", async () => {
+    const { address, saltedInitializationHash, contractorClassId } = await deriveContractAddress(
       CounterContractArtifact,
       [alice.getAddress()],
       alice.getAddress(),
@@ -70,25 +75,92 @@ describe("Counter Contract", () => {
       keys.publicKeys,
     );
 
-    console.log("Deployed address:  ", counter.address.toString());
-    console.log("Predicted address: ", address.toString());
-
-    expect(counter.address.toString()).toBe(address.toString());
+    const secretKeyDerivated = await counter.methods.compute_address_from_secret_keys(
+      contractorClassId.toField(),
+      saltedInitializationHash,
+      new Fr(keys.masterNullifierSecretKey.toBigInt()),
+      new Fr(keys.masterIncomingViewingSecretKey.toBigInt()),
+      new Fr(keys.masterOutgoingViewingSecretKey.toBigInt()),
+      new Fr(keys.masterTaggingSecretKey.toBigInt()),
+    ).simulate();
+    
+    expect(secretKeyDerivated.toString()).toBe(counter.address.toString());
+    expect(secretKeyDerivated.toString()).toBe(address.toString());
   });
 
-  it("Computing masterNullifierPublicKey should match", async () => {
-    const output = await counter.methods.private_to_public_keys(new Fr(keys.masterNullifierSecretKey)).simulate();
+  it("Circuit derives address from secret keys and init hash correctly", async () => {
+    const { address, initializationHash, contractorClassId } = await deriveContractAddress(
+      CounterContractArtifact,
+      [alice.getAddress()],
+      alice.getAddress(),
+      salt,
+      keys.publicKeys,
+    );
+
+    const skAndInitHashDerivated = await counter.methods.compute_address_from_secret_keys_and_init_hash(
+      contractorClassId.toField(),
+      salt,
+      initializationHash,
+      alice.getAddress(),
+      new Fr(keys.masterNullifierSecretKey.toBigInt()),
+      new Fr(keys.masterIncomingViewingSecretKey.toBigInt()),
+      new Fr(keys.masterOutgoingViewingSecretKey.toBigInt()),
+      new Fr(keys.masterTaggingSecretKey.toBigInt()),
+    ).simulate();
     
-    // Master Nullifier Public Key X and Y
-    const mnpkx = new Fr(output.x);
-    const mnpky = new Fr(output.y);
+    expect(skAndInitHashDerivated.toString()).toBe(counter.address.toString());
+    expect(skAndInitHashDerivated.toString()).toBe(address.toString());
+  });
 
-    console.log("Master Nullifier Public Key X: ", mnpkx);
-    console.log("Public Keys X:                 ", new Fr(keys.publicKeys.masterNullifierPublicKey.x));
-    console.log("Master Nullifier Public Key Y: ", mnpky);
-    console.log("Public Keys Y:                 ", keys.publicKeys.masterNullifierPublicKey.y);
+  it("Both derivation methods should produce the same address", async () => {
+    const { address, initializationHash, saltedInitializationHash, contractorClassId } = await deriveContractAddress(
+      CounterContractArtifact,
+      [alice.getAddress()],
+      alice.getAddress(),
+      salt,
+      keys.publicKeys,
+    );
 
-    expect(mnpkx.toString()).toBe(keys.publicKeys.masterNullifierPublicKey.x.toString());
-    expect(mnpky.toString()).toBe(keys.publicKeys.masterNullifierPublicKey.y.toString());
+    const secretKeyDerivated = await counter.methods.compute_address_from_secret_keys(
+      contractorClassId.toField(),
+      saltedInitializationHash,
+      new Fr(keys.masterNullifierSecretKey.toBigInt()),
+      new Fr(keys.masterIncomingViewingSecretKey.toBigInt()),
+      new Fr(keys.masterOutgoingViewingSecretKey.toBigInt()),
+      new Fr(keys.masterTaggingSecretKey.toBigInt()),
+    ).simulate();
+
+    const skAndInitHashDerivated = await counter.methods.compute_address_from_secret_keys_and_init_hash(
+      contractorClassId.toField(),
+      salt,
+      initializationHash,
+      alice.getAddress(),
+      new Fr(keys.masterNullifierSecretKey.toBigInt()),
+      new Fr(keys.masterIncomingViewingSecretKey.toBigInt()),
+      new Fr(keys.masterOutgoingViewingSecretKey.toBigInt()),
+      new Fr(keys.masterTaggingSecretKey.toBigInt()),
+    ).simulate();
+    
+    expect(secretKeyDerivated.toString()).toBe(counter.address.toString());
+    expect(secretKeyDerivated.toString()).toBe(address.toString());
+    expect(secretKeyDerivated.toString()).toBe(skAndInitHashDerivated.toString());
+  });
+ 
+  it("Secret to public key conversion should match", async () => {
+    const publicKeys = await counter.methods.secrets_to_public_keys(
+      new Fr(keys.masterNullifierSecretKey.toBigInt()),
+      new Fr(keys.masterIncomingViewingSecretKey.toBigInt()),
+      new Fr(keys.masterOutgoingViewingSecretKey.toBigInt()),
+      new Fr(keys.masterTaggingSecretKey.toBigInt())
+    ).simulate();
+
+    expect(new Fr(publicKeys.npk_m.inner.x).toString()).toBe(keys.publicKeys.masterNullifierPublicKey.x.toString());
+    expect(new Fr(publicKeys.npk_m.inner.y).toString()).toBe(keys.publicKeys.masterNullifierPublicKey.y.toString());
+    expect(new Fr(publicKeys.ivpk_m.inner.x).toString()).toBe(keys.publicKeys.masterIncomingViewingPublicKey.x.toString());
+    expect(new Fr(publicKeys.ivpk_m.inner.y).toString()).toBe(keys.publicKeys.masterIncomingViewingPublicKey.y.toString());
+    expect(new Fr(publicKeys.ovpk_m.inner.x).toString()).toBe(keys.publicKeys.masterOutgoingViewingPublicKey.x.toString());
+    expect(new Fr(publicKeys.ovpk_m.inner.y).toString()).toBe(keys.publicKeys.masterOutgoingViewingPublicKey.y.toString());
+    expect(new Fr(publicKeys.tpk_m.inner.x).toString()).toBe(keys.publicKeys.masterTaggingPublicKey.x.toString());
+    expect(new Fr(publicKeys.tpk_m.inner.y).toString()).toBe(keys.publicKeys.masterTaggingPublicKey.y.toString());
   });
 });
