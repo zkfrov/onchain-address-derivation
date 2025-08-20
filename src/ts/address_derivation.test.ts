@@ -19,6 +19,7 @@ import {
 import { getInitialTestAccountsWallets } from "@aztec/accounts/testing";
 import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { deriveKeys } from '@aztec/stdlib/keys';
+import { poseidon2Hash } from '@aztec/foundation/crypto';  
 
 describe("AddressDerivation Contract", () => {
   let pxe: PXE;
@@ -30,6 +31,7 @@ describe("AddressDerivation Contract", () => {
   let carl: AccountWallet;
 
   let addressDerivation: AddressDerivationContract;
+  let sk: Fr;
   let keys: {
     masterNullifierSecretKey: GrumpkinScalar;
     masterIncomingViewingSecretKey: GrumpkinScalar;
@@ -50,7 +52,8 @@ describe("AddressDerivation Contract", () => {
     carl = wallets[2];
 
     // Derive keys for the contract with a deterministic value
-    keys = await deriveKeys(Fr.ONE);
+    sk = Fr.ONE;
+    keys = await deriveKeys(sk);
   });
 
   beforeEach(async () => {
@@ -162,5 +165,41 @@ describe("AddressDerivation Contract", () => {
     expect(new Fr(publicKeys.ovpk_m.inner.y).toString()).toBe(keys.publicKeys.masterOutgoingViewingPublicKey.y.toString());
     expect(new Fr(publicKeys.tpk_m.inner.x).toString()).toBe(keys.publicKeys.masterTaggingPublicKey.x.toString());
     expect(new Fr(publicKeys.tpk_m.inner.y).toString()).toBe(keys.publicKeys.masterTaggingPublicKey.y.toString());
+  });
+
+  it("Get public keys should match", async () => {
+    const partialAddress = await addressDerivation.partialAddress;
+    pxe.registerAccount(sk, partialAddress);
+
+    const publicKeys = await addressDerivation.methods.get_public_keys(addressDerivation.address).simulate();
+
+    expect(new Fr(publicKeys.npk_m.inner.x).toString()).toBe(keys.publicKeys.masterNullifierPublicKey.x.toString());
+    expect(new Fr(publicKeys.npk_m.inner.y).toString()).toBe(keys.publicKeys.masterNullifierPublicKey.y.toString());
+    expect(new Fr(publicKeys.ivpk_m.inner.x).toString()).toBe(keys.publicKeys.masterIncomingViewingPublicKey.x.toString());
+    expect(new Fr(publicKeys.ivpk_m.inner.y).toString()).toBe(keys.publicKeys.masterIncomingViewingPublicKey.y.toString());
+    expect(new Fr(publicKeys.ovpk_m.inner.x).toString()).toBe(keys.publicKeys.masterOutgoingViewingPublicKey.x.toString());
+    expect(new Fr(publicKeys.ovpk_m.inner.y).toString()).toBe(keys.publicKeys.masterOutgoingViewingPublicKey.y.toString());
+    expect(new Fr(publicKeys.tpk_m.inner.x).toString()).toBe(keys.publicKeys.masterTaggingPublicKey.x.toString());
+    expect(new Fr(publicKeys.tpk_m.inner.y).toString()).toBe(keys.publicKeys.masterTaggingPublicKey.y.toString());
+  });
+
+  it("Check secret keys are valid for address", async () => {
+    const partialAddress = await addressDerivation.partialAddress;
+    pxe.registerAccount(sk, partialAddress);
+
+    await addressDerivation.methods.check_secret_keys_are_valid_for_address(
+      addressDerivation.address,
+      new Fr(keys.masterNullifierSecretKey.toBigInt()),
+      new Fr(keys.masterIncomingViewingSecretKey.toBigInt()),
+      new Fr(keys.masterOutgoingViewingSecretKey.toBigInt()),
+      new Fr(keys.masterTaggingSecretKey.toBigInt())
+    ).simulate();
+  });
+
+  it("nsk_apps should match", async () => {
+    const partialAddress = await addressDerivation.partialAddress;
+    await pxe.registerAccount(sk, partialAddress);
+   
+    await addressDerivation.methods.assert_nsk_app(addressDerivation.address).simulate();    
   });
 });

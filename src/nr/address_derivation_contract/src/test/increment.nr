@@ -1,9 +1,9 @@
-// use crate::{AddressDerivation, test::utils};
+use crate::{AddressDerivation, test::utils};
 
-// #[test]
-// unconstrained fn increment_success() {
-//     let (env, contract_address, owner, _) = utils::setup_contract(false);
+#[test]
+unconstrained fn nsk_apps_assertion() {
+    let (env, contract_address, user) = utils::setup_contract(false);
 
-//     env.impersonate(owner);
-//     AddressDerivation::at(contract_address).increment().call(&mut env.private());
-// }
+    env.impersonate(user);
+    AddressDerivation::at(contract_address).assert_nsk_app(contract_address).call(&mut env.private());
+}

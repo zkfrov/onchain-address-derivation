@@ -37,8 +37,11 @@ export default class AddressDerivationBenchmark extends Benchmark {
     const accounts = await getInitialTestAccountsWallets(pxe);
     const deployer = accounts[0]!;
 
-    const keys = await deriveKeys(Fr.ONE);
+    const sk = Fr.ONE;
+    const keys = await deriveKeys(sk);
     const salt = Fr.random();
+
+
 
     const { address, initializationHash, saltedInitializationHash, contractClassId } = await deriveContractAddress(
       AddressDerivationContractArtifact,
@@ -59,6 +62,10 @@ export default class AddressDerivationBenchmark extends Benchmark {
       deployedAddressDerivationContract.address,
       deployer,
     );
+
+    const partialAddress = await deployedAddressDerivationContract.partialAddress;
+    pxe.registerAccount(sk, partialAddress);
+    
     return { pxe, deployer, accounts, addressDerivationContract, contractClassId, saltedInitializationHash, keys, initializationHash, salt };
   }
 
@@ -83,6 +90,13 @@ export default class AddressDerivationBenchmark extends Benchmark {
         salt,
         initializationHash,
         alice.getAddress(),
+        new Fr(keys.masterNullifierSecretKey.toBigInt()),
+        new Fr(keys.masterIncomingViewingSecretKey.toBigInt()),
+        new Fr(keys.masterOutgoingViewingSecretKey.toBigInt()),
+        new Fr(keys.masterTaggingSecretKey.toBigInt()),
+      ),
+      addressDerivationContract.withWallet(alice).methods.check_secret_keys_are_valid_for_address(
+        addressDerivationContract.address,
         new Fr(keys.masterNullifierSecretKey.toBigInt()),
         new Fr(keys.masterIncomingViewingSecretKey.toBigInt()),
         new Fr(keys.masterOutgoingViewingSecretKey.toBigInt()),

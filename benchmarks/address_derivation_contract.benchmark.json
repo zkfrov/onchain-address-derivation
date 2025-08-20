@@ -1,0 +1,134 @@
+{
+  "summary": {
+    "compute_address_from_secret_keys": 298143,
+    "compute_address_from_secret_keys_and_init_hash": 298301,
+    "check_secret_keys_are_valid_for_address": 297966
+  },
+  "results": [
+    {
+      "name": "compute_address_from_secret_keys",
+      "totalGateCount": 298143,
+      "gateCounts": [
+        {
+          "circuitName": "SchnorrAccount:entrypoint",
+          "gateCount": 22551
+        },
+        {
+          "circuitName": "private_kernel_init",
+          "gateCount": 41409
+        },
+        {
+          "circuitName": "AddressDerivation:compute_address_from_secret_keys",
+          "gateCount": 9992
+        },
+        {
+          "circuitName": "private_kernel_inner",
+          "gateCount": 92843
+        },
+        {
+          "circuitName": "private_kernel_reset",
+          "gateCount": 97643
+        },
+        {
+          "circuitName": "private_kernel_tail",
+          "gateCount": 33705
+        }
+      ],
+      "gas": {
+        "gasLimits": {
+          "daGas": 1127,
+          "l2Gas": 2225
+        },
+        "teardownGasLimits": {
+          "daGas": 0,
+          "l2Gas": 0
+        }
+      }
+    },
+    {
+      "name": "compute_address_from_secret_keys_and_init_hash",
+      "totalGateCount": 298301,
+      "gateCounts": [
+        {
+          "circuitName": "SchnorrAccount:entrypoint",
+          "gateCount": 22551
+        },
+        {
+          "circuitName": "private_kernel_init",
+          "gateCount": 41409
+        },
+        {
+          "circuitName": "AddressDerivation:compute_address_from_secret_keys_and_init_hash",
+          "gateCount": 10150
+        },
+        {
+          "circuitName": "private_kernel_inner",
+          "gateCount": 92843
+        },
+        {
+          "circuitName": "private_kernel_reset",
+          "gateCount": 97643
+        },
+        {
+          "circuitName": "private_kernel_tail",
+          "gateCount": 33705
+        }
+      ],
+      "gas": {
+        "gasLimits": {
+          "daGas": 1127,
+          "l2Gas": 2225
+        },
+        "teardownGasLimits": {
+          "daGas": 0,
+          "l2Gas": 0
+        }
+      }
+    },
+    {
+      "name": "check_secret_keys_are_valid_for_address",
+      "totalGateCount": 297966,
+      "gateCounts": [
+        {
+          "circuitName": "SchnorrAccount:entrypoint",
+          "gateCount": 22551
+        },
+        {
+          "circuitName": "private_kernel_init",
+          "gateCount": 41409
+        },
+        {
+          "circuitName": "AddressDerivation:check_secret_keys_are_valid_for_address",
+          "gateCount": 9815
+        },
+        {
+          "circuitName": "private_kernel_inner",
+          "gateCount": 92843
+        },
+        {
+          "circuitName": "private_kernel_reset",
+          "gateCount": 97643
+        },
+        {
+          "circuitName": "private_kernel_tail",
+          "gateCount": 33705
+        }
+      ],
+      "gas": {
+        "gasLimits": {
+          "daGas": 1127,
+          "l2Gas": 2225
+        },
+        "teardownGasLimits": {
+          "daGas": 0,
+          "l2Gas": 0
+        }
+      }
+    }
+  ],
+  "gasSummary": {
+    "compute_address_from_secret_keys": 3352,
+    "compute_address_from_secret_keys_and_init_hash": 3352,
+    "check_secret_keys_are_valid_for_address": 3352
+  }
+}
